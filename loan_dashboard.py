@@ -214,3 +214,116 @@ if loan_amount > 0 and monthly_payment > 0:
 
 else:
     st.info("👆 Enter loan details above to see the amortization schedule.")
+
+# Snake game at the bottom
+st.markdown("---")
+st.subheader("🐍 Snake Game")
+st.markdown("Use **arrow keys** to control the snake. Press **Enter** to start / restart.")
+
+import streamlit.components.v1 as components
+
+snake_html = """
+<canvas id="snake" width="400" height="400" style="background:#1a1a2e;display:block;margin:0 auto;border:2px solid #4ECDC4;"></canvas>
+<p style="text-align:center;color:#ccc;font-family:sans-serif;margin:6px 0 0;">Score: <span id="score">0</span></p>
+<script>
+(function(){
+  const canvas = document.getElementById('snake');
+  const ctx = canvas.getContext('2d');
+  const GRID = 20;
+  const COLS = canvas.width / GRID;
+  const ROWS = canvas.height / GRID;
+
+  let snake, dir, nextDir, food, score, running, loop;
+
+  function init() {
+    snake = [{x:10,y:10},{x:9,y:10},{x:8,y:10}];
+    dir = {x:1,y:0};
+    nextDir = {x:1,y:0};
+    food = randomFood();
+    score = 0;
+    document.getElementById('score').textContent = 0;
+    running = true;
+    if(loop) clearInterval(loop);
+    loop = setInterval(tick, 130);
+  }
+
+  function randomFood() {
+    let pos;
+    do {
+      pos = {x: Math.floor(Math.random()*COLS), y: Math.floor(Math.random()*ROWS)};
+    } while(snake.some(s=>s.x===pos.x&&s.y===pos.y));
+    return pos;
+  }
+
+  function tick() {
+    dir = nextDir;
+    const head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
+    if(head.x<0||head.x>=COLS||head.y<0||head.y>=ROWS||snake.some(s=>s.x===head.x&&s.y===head.y)){
+      running = false;
+      clearInterval(loop);
+      ctx.fillStyle='rgba(0,0,0,0.6)';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle='#FF6B6B';
+      ctx.font='bold 28px sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('Game Over!', canvas.width/2, canvas.height/2-10);
+      ctx.fillStyle='#ccc';
+      ctx.font='16px sans-serif';
+      ctx.fillText('Press Enter to restart', canvas.width/2, canvas.height/2+20);
+      return;
+    }
+    snake.unshift(head);
+    if(head.x===food.x&&head.y===food.y){
+      score++;
+      document.getElementById('score').textContent = score;
+      food = randomFood();
+    } else {
+      snake.pop();
+    }
+    draw();
+  }
+
+  function draw() {
+    ctx.fillStyle='#1a1a2e';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    // food
+    ctx.fillStyle='#FF6B6B';
+    ctx.beginPath();
+    ctx.arc(food.x*GRID+GRID/2, food.y*GRID+GRID/2, GRID/2-2, 0, Math.PI*2);
+    ctx.fill();
+    // snake
+    snake.forEach((seg,i)=>{
+      ctx.fillStyle = i===0 ? '#4ECDC4' : '#95E1D3';
+      ctx.fillRect(seg.x*GRID+1, seg.y*GRID+1, GRID-2, GRID-2);
+    });
+  }
+
+  document.addEventListener('keydown', function(e){
+    if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter'].includes(e.key)) e.preventDefault();
+    if(e.key==='Enter'){ init(); return; }
+    if(!running) return;
+    const map = {
+      ArrowUp:    {x:0,y:-1},
+      ArrowDown:  {x:0,y:1},
+      ArrowLeft:  {x:-1,y:0},
+      ArrowRight: {x:1,y:0}
+    };
+    const d = map[e.key];
+    if(d && !(d.x===-dir.x&&d.y===-dir.y)) nextDir = d;
+  });
+
+  // Draw start screen
+  ctx.fillStyle='#1a1a2e';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#4ECDC4';
+  ctx.font='bold 28px sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('🐍 Snake', canvas.width/2, canvas.height/2-10);
+  ctx.fillStyle='#ccc';
+  ctx.font='16px sans-serif';
+  ctx.fillText('Press Enter to start', canvas.width/2, canvas.height/2+20);
+})();
+</script>
+"""
+
+components.html(snake_html, height=450)
