@@ -272,7 +272,7 @@ snake_html = """
   .ctrl-grid button:hover,
   .ctrl-grid button:active { background: #4ECDC4; color: #16213e; }
   #startBtn {
-    margin-top: 140px;
+    margin-top: 16px;
     padding: 10px 32px;
     font-size: 16px;
     border: none;
