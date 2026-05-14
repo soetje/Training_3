@@ -424,4 +424,4 @@ snake_html = """
 </script>
 """
 
-st.components.v1.html(snake_html, height=640, scrolling=False)
+st.components.v1.html(snake_html, height=780, scrolling=False)
