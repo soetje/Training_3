@@ -1,0 +1,216 @@
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+import numpy as np
+
+st.set_page_config(page_title="Loan Amortization Dashboard", layout="wide")
+
+st.title("📊 Loan Amortization Dashboard")
+st.markdown("---")
+
+# Create input columns
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    loan_amount = st.number_input(
+        "Loan Amount ($)",
+        min_value=0.0,
+        value=100000.0,
+        step=1000.0,
+        format="%.2f"
+    )
+
+with col2:
+    interest_rate = st.number_input(
+        "Annual Interest Rate (%)",
+        min_value=0.0,
+        value=5.0,
+        step=0.1,
+        format="%.2f"
+    )
+
+with col3:
+    monthly_payment = st.number_input(
+        "Monthly Payment ($)",
+        min_value=0.0,
+        value=1000.0,
+        step=50.0,
+        format="%.2f"
+    )
+
+with col4:
+    term_months = st.number_input(
+        "Loan Term (months)",
+        min_value=1,
+        value=360,
+        step=12
+    )
+
+st.markdown("---")
+
+# Calculate amortization schedule
+def calculate_amortization(principal, annual_rate, payment, max_months):
+    """Calculate loan amortization schedule"""
+    monthly_rate = annual_rate / 100 / 12
+    
+    schedule = []
+    balance = principal
+    month = 0
+    
+    while balance > 0 and month < max_months:
+        month += 1
+        
+        # Calculate interest for this month
+        interest_payment = balance * monthly_rate
+        
+        # Calculate principal payment
+        principal_payment = payment - interest_payment
+        
+        # If payment is less than interest, loan grows
+        if principal_payment < 0:
+            st.warning("⚠️ Warning: Monthly payment is less than interest! Loan balance will grow.")
+            principal_payment = 0
+            balance += interest_payment
+        else:
+            # Reduce balance
+            balance -= principal_payment
+            
+        # Don't let balance go negative
+        if balance < 0:
+            principal_payment += balance
+            balance = 0
+            
+        schedule.append({
+            'Month': month,
+            'Payment': payment if balance > 0 or month == 1 else payment + balance,
+            'Principal': principal_payment,
+            'Interest': interest_payment,
+            'Balance': max(0, balance)
+        })
+        
+        if balance <= 0:
+            break
+    
+    return pd.DataFrame(schedule)
+
+# Calculate the schedule
+if loan_amount > 0 and monthly_payment > 0:
+    df = calculate_amortization(loan_amount, interest_rate, monthly_payment, term_months)
+    
+    # Display summary metrics
+    col1, col2, col3, col4 = st.columns(4)
+    
+    total_paid = df['Payment'].sum()
+    total_interest = df['Interest'].sum()
+    total_principal = df['Principal'].sum()
+    months_to_payoff = len(df)
+    
+    with col1:
+        st.metric("Total Amount Paid", f"${total_paid:,.2f}")
+    
+    with col2:
+        st.metric("Total Interest Paid", f"${total_interest:,.2f}")
+    
+    with col3:
+        st.metric("Total Principal Paid", f"${total_principal:,.2f}")
+    
+    with col4:
+        st.metric("Months to Payoff", f"{months_to_payoff}")
+    
+    st.markdown("---")
+    
+    # Create the main visualization
+    fig = go.Figure()
+    
+    # Add loan balance line
+    fig.add_trace(go.Scatter(
+        x=df['Month'],
+        y=df['Balance'],
+        mode='lines',
+        name='Loan Balance',
+        line=dict(color='#FF6B6B', width=3),
+        fill='tozeroy',
+        fillcolor='rgba(255, 107, 107, 0.1)'
+    ))
+    
+    # Add cumulative interest line
+    df['Cumulative_Interest'] = df['Interest'].cumsum()
+    fig.add_trace(go.Scatter(
+        x=df['Month'],
+        y=df['Cumulative_Interest'],
+        mode='lines',
+        name='Cumulative Interest',
+        line=dict(color='#4ECDC4', width=2, dash='dash')
+    ))
+    
+    # Add cumulative principal line
+    df['Cumulative_Principal'] = df['Principal'].cumsum()
+    fig.add_trace(go.Scatter(
+        x=df['Month'],
+        y=df['Cumulative_Principal'],
+        mode='lines',
+        name='Cumulative Principal',
+        line=dict(color='#95E1D3', width=2, dash='dash')
+    ))
+    
+    fig.update_layout(
+        title='Loan Balance Over Time',
+        xaxis_title='Month',
+        yaxis_title='Amount ($)',
+        hovermode='x unified',
+        height=500,
+        template='plotly_white',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Create payment breakdown chart
+    st.subheader("Monthly Payment Breakdown")
+    
+    fig2 = go.Figure()
+    
+    fig2.add_trace(go.Bar(
+        x=df['Month'],
+        y=df['Principal'],
+        name='Principal Payment',
+        marker_color='#95E1D3'
+    ))
+    
+    fig2.add_trace(go.Bar(
+        x=df['Month'],
+        y=df['Interest'],
+        name='Interest Payment',
+        marker_color='#4ECDC4'
+    ))
+    
+    fig2.update_layout(
+        barmode='stack',
+        xaxis_title='Month',
+        yaxis_title='Payment Amount ($)',
+        height=400,
+        template='plotly_white',
+        hovermode='x unified'
+    )
+    
+    st.plotly_chart(fig2, use_container_width=True)
+    
+    # Display amortization table
+    with st.expander("📋 View Complete Amortization Schedule"):
+        # Format the dataframe for display
+        display_df = df.copy()
+        display_df['Payment'] = display_df['Payment'].apply(lambda x: f"${x:,.2f}")
+        display_df['Principal'] = display_df['Principal'].apply(lambda x: f"${x:,.2f}")
+        display_df['Interest'] = display_df['Interest'].apply(lambda x: f"${x:,.2f}")
+        display_df['Balance'] = display_df['Balance'].apply(lambda x: f"${x:,.2f}")
+        
+        st.dataframe(display_df, use_container_width=True, height=400)
+
+else:
+    st.info("👆 Enter loan details above to see the amortization schedule.")
