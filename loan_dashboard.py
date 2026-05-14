@@ -13,7 +13,7 @@ col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     loan_amount = st.number_input(
-        "Loan Amount ($)",
+        "Loan Amount (€)",
         min_value=0.0,
         value=100000.0,
         step=1000.0,
@@ -31,7 +31,7 @@ with col2:
 
 with col3:
     monthly_payment = st.number_input(
-        "Monthly Payment ($)",
+        "Monthly Payment (€)",
         min_value=0.0,
         value=1000.0,
         step=50.0,
@@ -106,13 +106,13 @@ if loan_amount > 0 and monthly_payment > 0:
     months_to_payoff = len(df)
     
     with col1:
-        st.metric("Total Amount Paid", f"${total_paid:,.2f}")
+        st.metric("Total Amount Paid", f"€{total_paid:,.2f}")
     
     with col2:
-        st.metric("Total Interest Paid", f"${total_interest:,.2f}")
+        st.metric("Total Interest Paid", f"€{total_interest:,.2f}")
     
     with col3:
-        st.metric("Total Principal Paid", f"${total_principal:,.2f}")
+        st.metric("Total Principal Paid", f"€{total_principal:,.2f}")
     
     with col4:
         st.metric("Months to Payoff", f"{months_to_payoff}")
@@ -156,7 +156,7 @@ if loan_amount > 0 and monthly_payment > 0:
     fig.update_layout(
         title='Loan Balance Over Time',
         xaxis_title='Month',
-        yaxis_title='Amount ($)',
+        yaxis_title='Amount (€)',
         hovermode='x unified',
         height=500,
         template='plotly_white',
@@ -193,7 +193,7 @@ if loan_amount > 0 and monthly_payment > 0:
     fig2.update_layout(
         barmode='stack',
         xaxis_title='Month',
-        yaxis_title='Payment Amount ($)',
+        yaxis_title='Payment Amount (€)',
         height=400,
         template='plotly_white',
         hovermode='x unified'
@@ -205,10 +205,10 @@ if loan_amount > 0 and monthly_payment > 0:
     with st.expander("📋 View Complete Amortization Schedule"):
         # Format the dataframe for display
         display_df = df.copy()
-        display_df['Payment'] = display_df['Payment'].apply(lambda x: f"${x:,.2f}")
-        display_df['Principal'] = display_df['Principal'].apply(lambda x: f"${x:,.2f}")
-        display_df['Interest'] = display_df['Interest'].apply(lambda x: f"${x:,.2f}")
-        display_df['Balance'] = display_df['Balance'].apply(lambda x: f"${x:,.2f}")
+        display_df['Payment'] = display_df['Payment'].apply(lambda x: f"€{x:,.2f}")
+        display_df['Principal'] = display_df['Principal'].apply(lambda x: f"€{x:,.2f}")
+        display_df['Interest'] = display_df['Interest'].apply(lambda x: f"€{x:,.2f}")
+        display_df['Balance'] = display_df['Balance'].apply(lambda x: f"€{x:,.2f}")
         
         st.dataframe(display_df, use_container_width=True, height=400)
 
