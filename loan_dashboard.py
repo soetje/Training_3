@@ -379,11 +379,24 @@ snake_html = """
       for (let c = 0; c < COLS; c++)
         ctx.fillRect(c*CELL + CELL/2 - 1, r*CELL + CELL/2 - 1, 2, 2);
 
-    // Food
-    ctx.font = `${Math.floor(CELL - 4)}px serif`;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🍎', food.x*CELL + CELL/2, food.y*CELL + CELL/2 + 1);
+    // Food — bright glowing circle
+    const fx = food.x * CELL + CELL / 2;
+    const fy = food.y * CELL + CELL / 2;
+    const radius = CELL * 0.35;
+    ctx.save();
+    ctx.shadowColor = '#FFE600';
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = '#FFE600';
+    ctx.beginPath();
+    ctx.arc(fx, fy, radius, 0, Math.PI * 2);
+    ctx.fill();
+    // Inner highlight
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#FFF176';
+    ctx.beginPath();
+    ctx.arc(fx - radius * 0.25, fy - radius * 0.25, radius * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
 
     // Snake body
     snake.forEach((seg, i) => {
